@@ -1,13 +1,18 @@
 package com.beatdjam.qrcodereader
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.webkit.URLUtil
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.zxing.integration.android.IntentIntegrator
 import kotlinx.android.synthetic.main.activity_main.*
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -38,17 +43,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun openDialogForUrl(url: String) {
         AlertDialog.Builder(this)
-            .setTitle("読み取りURL")
+            .setTitle("読み取りURLをブラウザで開きますか？")
             .setMessage(url)
-            .setPositiveButton("はい") { _, _ -> openBrowser(url) }
-            .setNegativeButton("いいえ", null)
+            .setPositiveButton("開く") { _, _ -> openBrowser(url) }
+            .setNegativeButton("閉じる", null)
             .show()
     }
 
     private fun openDialogForOther(contents: String) {
         AlertDialog.Builder(this)
-            .setTitle("読み取りテキスト")
+            .setTitle("読み取りテキストをクリップボードにコピーしますか？")
             .setMessage(contents)
+            .setPositiveButton("コピー") { _, _ -> copyToClipBoard(contents) }
             .setNegativeButton("閉じる", null)
             .show()
     }
@@ -57,5 +63,12 @@ class MainActivity : AppCompatActivity() {
     private fun openBrowser(contents: String) {
         val uri = Uri.parse(contents)
         startActivity(Intent(Intent.ACTION_VIEW, uri))
+    }
+
+    private fun copyToClipBoard(contents: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+        val clip = ClipData.newPlainText("", contents)
+        clipboard.setPrimaryClip(clip)
+        Toast.makeText(this, "クリップボードにコピーしました", Toast.LENGTH_SHORT).show();
     }
 }
