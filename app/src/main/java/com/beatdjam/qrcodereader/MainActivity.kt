@@ -26,8 +26,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
+        val intentString = intent.dataString ?: intent.getStringExtra(Intent.EXTRA_TEXT)
+        if (!intentString.isNullOrEmpty()) {
+            editText.setText(intentString)
+            makeQRCode(editText.text.toString())
+        }
+
         fab.setOnClickListener { IntentIntegrator(this).initiateScan() }
-        button.setOnClickListener { makeQRCode(editText.text.toString()) }
+        button.setOnClickListener {
+            val text = editText.text.toString()
+            if (text.isNotEmpty()) makeQRCode(editText.text.toString())
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
