@@ -26,13 +26,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
+        // 外部から起動されて文字列が渡ってきていたらQR生成
         val intentString = intent.dataString ?: intent.getStringExtra(Intent.EXTRA_TEXT)
         if (!intentString.isNullOrEmpty()) {
             editText.setText(intentString)
             makeQRCode(editText.text.toString())
         }
 
+        // QRコードスキャナ起動
         fab.setOnClickListener { IntentIntegrator(this).initiateScan() }
+
+        // ボタンを押してQRコード生成
         button.setOnClickListener {
             val text = editText.text.toString()
             if (text.isNotEmpty()) makeQRCode(editText.text.toString())
@@ -43,13 +47,9 @@ class MainActivity : AppCompatActivity() {
         val result = IntentIntegrator
             .parseActivityResult(requestCode, resultCode, data)
             ?.contents
-        // resultが空なら何もせずに終了
-        if (result.isNullOrEmpty()) {
-            super.onActivityResult(requestCode, resultCode, data)
-            return
-        }
 
         when {
+            result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, data)
             URLUtil.isValidUrl(result) -> dialogAction(
                 result,
                 "読み取りURLをブラウザで開きますか？",
@@ -79,10 +79,8 @@ class MainActivity : AppCompatActivity() {
             .show()
     }
 
-    private fun openBrowser(contents: String) {
-        val uri = Uri.parse(contents)
-        startActivity(Intent(Intent.ACTION_VIEW, uri))
-    }
+    private fun openBrowser(contents: String) =
+        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(contents)))
 
     private fun copyToClipBoard(contents: String) {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -91,15 +89,11 @@ class MainActivity : AppCompatActivity() {
         Toast.makeText(this, "クリップボードにコピーしました", Toast.LENGTH_SHORT).show()
     }
 
-    private fun makeQRCode(contents: String) {
+    private fun makeQRCode(contents: String) = try {
         val size = 500
-        try {
-            //QRコードをBitmapで作成
-            val bitmap = BarcodeEncoder().encodeBitmap(contents, BarcodeFormat.QR_CODE, size, size)
-            //作成したQRコードを画面上に配置
-            imageView2.setImageBitmap(bitmap)
-        } catch (e: WriterException) {
-            throw AndroidRuntimeException("Barcode Error.", e)
-        }
+        val bitmap = BarcodeEncoder().encodeBitmap(contents, BarcodeFormat.QR_CODE, size, size)
+        imageView2.setImageBitmap(bitmap)
+    } catch (e: WriterException) {
+        throw AndroidRuntimeException("Barcode Error.", e)
     }
 }
