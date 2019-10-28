@@ -49,29 +49,35 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // URLの場合のみWeb遷移用ダイアログを開く
-        if (URLUtil.isValidUrl(result)) openDialogForUrl(Uri.parse(result).toString())
-        else openDialogForOther(result)
+        when {
+            URLUtil.isValidUrl(result) -> dialogAction(
+                result,
+                "読み取りURLをブラウザで開きますか？",
+                "開く",
+                ::openBrowser
+            )
+            else -> dialogAction(
+                result,
+                "読み取りテキストをクリップボードにコピーしますか？",
+                "コピー",
+                ::copyToClipBoard
+            )
+        }
     }
 
-    private fun openDialogForUrl(url: String) {
+    private fun dialogAction(
+        contents: String,
+        title: String,
+        positiveText: String,
+        positiveEvent: (String) -> Unit
+    ) {
         AlertDialog.Builder(this)
-            .setTitle("読み取りURLをブラウザで開きますか？")
-            .setMessage(url)
-            .setPositiveButton("開く") { _, _ -> openBrowser(url) }
-            .setNegativeButton("閉じる", null)
-            .show()
-    }
-
-    private fun openDialogForOther(contents: String) {
-        AlertDialog.Builder(this)
-            .setTitle("読み取りテキストをクリップボードにコピーしますか？")
+            .setTitle(title)
             .setMessage(contents)
-            .setPositiveButton("コピー") { _, _ -> copyToClipBoard(contents) }
+            .setPositiveButton(positiveText) { _, _ -> positiveEvent(contents) }
             .setNegativeButton("閉じる", null)
             .show()
     }
-
 
     private fun openBrowser(contents: String) {
         val uri = Uri.parse(contents)
