@@ -4,6 +4,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.util.AndroidRuntimeException
@@ -11,8 +12,9 @@ import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.WriterException
+import androidx.core.graphics.drawable.toBitmap
+import com.google.zxing.*
+import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.android.synthetic.main.activity_main.*
@@ -40,6 +42,11 @@ class MainActivity : AppCompatActivity() {
         button.setOnClickListener {
             val text = editText.text.toString()
             if (text.isNotEmpty()) makeQRCode(editText.text.toString())
+        }
+
+        button2.setOnClickListener {
+            val bitmap = imageView2.drawable.toBitmap()
+            readQRCodeFromImage(bitmap)
         }
     }
 
@@ -95,5 +102,26 @@ class MainActivity : AppCompatActivity() {
         imageView2.setImageBitmap(bitmap)
     } catch (e: WriterException) {
         throw AndroidRuntimeException("Barcode Error.", e)
+    }
+
+    private fun readQRCodeFromImage(bitmap: Bitmap) {
+        val width = bitmap.width
+        val height = bitmap.height
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        val source = RGBLuminanceSource(width, height, pixels)
+        val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
+        val result = try {
+            MultiFormatReader().decode(binaryBitmap)
+        } catch (e: NotFoundException) {
+            null
+        } catch (e: ChecksumException) {
+            null
+        } catch (e: FormatException) {
+            null
+        }
+        val decoded = String(result?.text?.toByteArray()!!, Charsets.UTF_8)
+        editText.setText(decoded)
+        Toast.makeText(this, decoded, Toast.LENGTH_SHORT).show()
     }
 }
