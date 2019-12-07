@@ -98,7 +98,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun makeQRCode(contents: String) = try {
         val size = 500
-        val bitmap = BarcodeEncoder().encodeBitmap(contents, BarcodeFormat.QR_CODE, size, size)
+        val bitmap = BarcodeEncoder().encodeBitmap(
+            contents,
+            BarcodeFormat.QR_CODE,
+            size,
+            size,
+            mapOf(EncodeHintType.CHARACTER_SET to "UTF-8")
+        )
         imageView2.setImageBitmap(bitmap)
     } catch (e: WriterException) {
         throw AndroidRuntimeException("Barcode Error.", e)
