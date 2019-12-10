@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         // QRコードスキャナ起動
-        fab.setOnClickListener { IntentIntegrator(this).initiateScan() }
+        fab.setOnClickListener { IntentIntegrator(this).setBeepEnabled(false).initiateScan() }
 
         // ボタンを押してQRコード生成
         button.setOnClickListener {
@@ -111,23 +111,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun readQRCodeFromImage(bitmap: Bitmap) {
-        val width = bitmap.width
-        val height = bitmap.height
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-        val source = RGBLuminanceSource(width, height, pixels)
-        val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
-        val result = try {
-            MultiFormatReader().decode(binaryBitmap)
-        } catch (e: NotFoundException) {
-            null
-        } catch (e: ChecksumException) {
-            null
-        } catch (e: FormatException) {
-            null
+        val readString = with(bitmap) {
+            val pixels = IntArray(width * height)
+            getPixels(pixels, 0, width, 0, 0, width, height)
+
+            val source = RGBLuminanceSource(width, height, pixels)
+            val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
+
+            try {
+                MultiFormatReader().decode(binaryBitmap)
+            } catch (e: NotFoundException) {
+                null
+            } catch (e: ChecksumException) {
+                null
+            } catch (e: FormatException) {
+                null
+            }?.text
         }
-        val decoded = String(result?.text?.toByteArray()!!, Charsets.UTF_8)
-        editText.setText(decoded)
-        Toast.makeText(this, decoded, Toast.LENGTH_SHORT).show()
+
+        Toast.makeText(this, readString, Toast.LENGTH_SHORT).show()
     }
 }
