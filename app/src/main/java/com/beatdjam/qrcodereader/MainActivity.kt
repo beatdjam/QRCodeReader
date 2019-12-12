@@ -1,10 +1,12 @@
 package com.beatdjam.qrcodereader
 
+import android.app.Activity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
 import android.util.AndroidRuntimeException
@@ -12,7 +14,6 @@ import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.graphics.drawable.toBitmap
 import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.integration.android.IntentIntegrator
@@ -20,8 +21,8 @@ import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
-
 class MainActivity : AppCompatActivity() {
+    private val RESULT_PICK_IMAGEFILE = 1000
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,19 +45,31 @@ class MainActivity : AppCompatActivity() {
             if (text.isNotEmpty()) makeQRCode(editText.text.toString())
         }
 
+        // TODO リファクタ
         button2.setOnClickListener {
-            val bitmap = imageView2.drawable.toBitmap()
-            readQRCodeFromImage(bitmap)
+            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).also {
+                it.addCategory(Intent.CATEGORY_OPENABLE)
+                it.type = "image/*"
+            }
+            startActivityForResult(intent, RESULT_PICK_IMAGEFILE)
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, intantData: Intent?) {
+        // TODO リファクタ
+        if (requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK) {
+            val bitmap = intantData?.data?.let { getBitmapFromUri(it) }
+            if (bitmap != null) readQRCodeFromImage(bitmap)
+            return
+        }
+
+
         val result = IntentIntegrator
-            .parseActivityResult(requestCode, resultCode, data)
+            .parseActivityResult(requestCode, resultCode, intantData)
             ?.contents
 
         when {
-            result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, data)
+            result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, intantData)
             URLUtil.isValidUrl(result) -> dialogAction(
                 result,
                 "読み取りURLをブラウザで開きますか？",
@@ -71,6 +84,10 @@ class MainActivity : AppCompatActivity() {
             )
         }
     }
+
+    private fun getBitmapFromUri(uri: Uri) = contentResolver
+        .openFileDescriptor(uri, "r")
+        ?.use { BitmapFactory.decodeFileDescriptor(it.fileDescriptor) }
 
     private fun dialogAction(
         contents: String,
@@ -110,23 +127,14 @@ class MainActivity : AppCompatActivity() {
         throw AndroidRuntimeException("Barcode Error.", e)
     }
 
+    // TODO リファクタ
     private fun readQRCodeFromImage(bitmap: Bitmap) {
         val readString = with(bitmap) {
             val pixels = IntArray(width * height)
             getPixels(pixels, 0, width, 0, 0, width, height)
-
             val source = RGBLuminanceSource(width, height, pixels)
             val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
-
-            try {
-                MultiFormatReader().decode(binaryBitmap)
-            } catch (e: NotFoundException) {
-                null
-            } catch (e: ChecksumException) {
-                null
-            } catch (e: FormatException) {
-                null
-            }?.text
+            MultiFormatReader().decode(binaryBitmap)?.text
         }
 
         Toast.makeText(this, readString, Toast.LENGTH_SHORT).show()
