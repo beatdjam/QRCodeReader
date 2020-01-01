@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
                 ?.let { ZXingUtil.readQRCodeFromImage(it) }
         }
         // カメラからのQRコード読み取り後の処理
-        else -> ZXingUtil.readQRCodeFromCamera(data)
+        else -> ZXingUtil.readQRCodeFromCamera(requestCode, resultCode, data)
     }
 
 }
