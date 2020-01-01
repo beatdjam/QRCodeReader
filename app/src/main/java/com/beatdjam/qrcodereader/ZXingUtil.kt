@@ -10,6 +10,8 @@ import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
 
 object ZXingUtil {
+    const val RESULT_PICK_IMAGE_FILE = 1000
+
     /**
      * QRCode読み取りカメラ起動
      */
@@ -19,8 +21,11 @@ object ZXingUtil {
     /**
      * カメラ画像からQRCode読み取りを実行
      */
-    fun readQRCodeFromCamera(requestCode: Int, resultCode: Int, intantData: Intent?) =
-        IntentIntegrator.parseActivityResult(requestCode, resultCode, intantData)?.contents
+    fun readQRCodeFromCamera(intantData: Intent?) = IntentIntegrator.parseActivityResult(
+        RESULT_PICK_IMAGE_FILE,
+        Activity.RESULT_OK,
+        intantData
+    )?.contents
 
     /**
      * bitmapからQRCode読み取りを実行

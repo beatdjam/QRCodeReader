@@ -2,17 +2,14 @@ package com.beatdjam.qrcodereader
 
 import android.app.Activity
 import android.content.Intent
-import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.beatdjam.qrcodereader.ZXingUtil.RESULT_PICK_IMAGE_FILE
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
 
 class MainActivity : AppCompatActivity() {
-    private val RESULT_PICK_IMAGEFILE = 1000
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -36,20 +33,12 @@ class MainActivity : AppCompatActivity() {
 
         // 端末内画像読み込み
         button2.setOnClickListener {
-            startActivityForResult(ImageUtil.createIntentOfGetDeviceImage(), RESULT_PICK_IMAGEFILE)
+            startActivityForResult(ImageUtil.createGetDeviceImageIntent(), RESULT_PICK_IMAGE_FILE)
         }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val result = when {
-            // ローカル画像読み取りの場合
-            requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK -> {
-                getBitmapFromUri(data?.data)?.let { ZXingUtil.readQRCodeFromImage(it) }
-            }
-            // カメラからのQRコード読み取り後の処理
-            else -> ZXingUtil.readQRCodeFromCamera(requestCode, resultCode, data)
-        }
-
+        val result = getStringFromQRCode(requestCode, resultCode, data)
         when {
             result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, data)
             else -> {
@@ -62,12 +51,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * 画像選択Intentから渡されたURIを用いて、Bitmap取得を行う
+     * QRコードから文字列を取得
      */
-    private fun getBitmapFromUri(uri: Uri?) = when {
-        uri != null -> contentResolver
-            .openFileDescriptor(uri, "r")
-            ?.use { BitmapFactory.decodeFileDescriptor(it.fileDescriptor) }
-        else -> null
+    private fun getStringFromQRCode(requestCode: Int, resultCode: Int, data: Intent?) = when {
+        // ローカル画像読み取りの場合
+        requestCode == RESULT_PICK_IMAGE_FILE && resultCode == Activity.RESULT_OK -> {
+            ImageUtil.getBitmapFromUri(this, data?.data)
+                ?.let { ZXingUtil.readQRCodeFromImage(it) }
+        }
+        // カメラからのQRコード読み取り後の処理
+        else -> ZXingUtil.readQRCodeFromCamera(data)
     }
+
 }
