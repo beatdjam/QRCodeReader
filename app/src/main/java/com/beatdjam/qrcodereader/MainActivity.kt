@@ -50,44 +50,37 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, intantData: Intent?) {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val result = when {
             // ローカル画像読み取りの場合
             requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK -> {
-                getBitmapFromUri(intantData?.data)?.let { ZXingModel.readQRCodeFromImage(it) }
+                getBitmapFromUri(data?.data)?.let { ZXingModel.readQRCodeFromImage(it) }
             }
             // カメラからのQRコード読み取り後の処理
-            else -> ZXingModel.readQRCodeFromCamera(requestCode, resultCode, intantData)
+            else -> ZXingModel.readQRCodeFromCamera(requestCode, resultCode, data)
         }
 
         when {
-            result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, intantData)
-            URLUtil.isValidUrl(result) -> dialogAction(
-                result,
-                "読み取りURLをブラウザで開きますか？",
-                "開く",
-                ::openBrowser
-            )
-            else -> dialogAction(
-                result,
-                "読み取りテキストをクリップボードにコピーしますか？",
-                "コピー",
-                ::copyToClipBoard
-            )
+            result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, data)
+            else -> dialogAction(result)
         }
     }
 
 
-    private fun dialogAction(
-        contents: String,
-        title: String,
-        positiveText: String,
-        positiveEvent: (String) -> Unit
-    ) {
+    private fun dialogAction(contents: String) {
+        val (title, text, event) = when {
+            URLUtil.isValidUrl(contents) -> {
+                Triple("読み取りURLをブラウザで開きますか？", "開く", ::openBrowser)
+            }
+            else -> {
+                Triple("読み取りテキストをクリップボードにコピーしますか？", "コピー", ::copyToClipBoard)
+            }
+        }
+
         AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(contents)
-            .setPositiveButton(positiveText) { _, _ -> positiveEvent(contents) }
+            .setPositiveButton(text) { _, _ -> event(contents) }
             .setNegativeButton("閉じる", null)
             .show()
     }
