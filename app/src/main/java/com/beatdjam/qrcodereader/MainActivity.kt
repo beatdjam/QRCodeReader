@@ -26,8 +26,8 @@ class MainActivity : AppCompatActivity() {
         // 外部から起動されて文字列が渡ってきていたらQR生成
         val intentString = intent.dataString ?: intent.getStringExtra(Intent.EXTRA_TEXT)
         if (!intentString.isNullOrEmpty()) {
+            val bitmap = ZXingModel.makeQRCode(intentString)
             editText.setText(intentString)
-            val bitmap = ZXingModel.makeQRCode(editText.text.toString())
             imageView2.setImageBitmap(bitmap)
         }
 
@@ -51,16 +51,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intantData: Intent?) {
-        // ローカル画像読み込みの場合は優先的に処理
-        if (requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK) {
-            val readFromQRCode = getBitmapFromUri(intantData?.data)
-                ?.let { ZXingModel.readQRCodeFromImage(it) }
-            Toast.makeText(this, readFromQRCode, Toast.LENGTH_SHORT).show()
-            return
+        val result = when {
+            // ローカル画像読み取りの場合
+            requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK -> {
+                getBitmapFromUri(intantData?.data)?.let { ZXingModel.readQRCodeFromImage(it) }
+            }
+            // カメラからのQRコード読み取り後の処理
+            else -> ZXingModel.readQRCodeFromCamera(requestCode, resultCode, intantData)
         }
 
-        // カメラからのQRコード読み取り後の処理
-        val result = ZXingModel.readQRCodeFromCamera(requestCode, resultCode, intantData)
         when {
             result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, intantData)
             URLUtil.isValidUrl(result) -> dialogAction(
