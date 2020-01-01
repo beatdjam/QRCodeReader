@@ -26,7 +26,9 @@ class MainActivity : AppCompatActivity() {
         // ボタンを押してQRコード生成
         create_qr_code.setOnClickListener {
             val text = editText.text.toString()
-            if (text.isNotEmpty()) ZXingUtil.makeQRCode(editText.text.toString())
+            if (text.isNotEmpty()) {
+                imageView2.setImageBitmap(ZXingUtil.makeQRCode(editText.text.toString()))
+            }
         }
 
         // QRコードスキャナ起動
