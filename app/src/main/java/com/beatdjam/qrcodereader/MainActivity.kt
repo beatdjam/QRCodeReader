@@ -53,11 +53,9 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, intantData: Intent?) {
         // ローカル画像読み込みの場合は優先的に処理
         if (requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK) {
-            val bitmap = intantData?.data?.let { getBitmapFromUri(it) }
-            if (bitmap != null) {
-                val readFromQRCode = ZXingModel.readQRCodeFromImage(bitmap)
-                Toast.makeText(this, readFromQRCode, Toast.LENGTH_SHORT).show()
-            }
+            val readFromQRCode = getBitmapFromUri(intantData?.data)
+                ?.let { ZXingModel.readQRCodeFromImage(it) }
+            Toast.makeText(this, readFromQRCode, Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -80,9 +78,12 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getBitmapFromUri(uri: Uri) = contentResolver
-        .openFileDescriptor(uri, "r")
-        ?.use { BitmapFactory.decodeFileDescriptor(it.fileDescriptor) }
+    private fun getBitmapFromUri(uri: Uri?) = when {
+        uri != null -> contentResolver
+            .openFileDescriptor(uri, "r")
+            ?.use { BitmapFactory.decodeFileDescriptor(it.fileDescriptor) }
+        else -> null
+    }
 
     private fun dialogAction(
         contents: String,
