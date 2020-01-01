@@ -23,16 +23,17 @@ class MainActivity : AppCompatActivity() {
             imageView2.setImageBitmap(bitmap)
         }
 
-        // QRコードスキャナ起動
-        fab.setOnClickListener { ZXingUtil.initiateScan(this) }
         // ボタンを押してQRコード生成
-        button.setOnClickListener {
+        create_qr_code.setOnClickListener {
             val text = editText.text.toString()
             if (text.isNotEmpty()) ZXingUtil.makeQRCode(editText.text.toString())
         }
 
+        // QRコードスキャナ起動
+        launch_camera.setOnClickListener { ZXingUtil.initiateScan(this) }
+
         // 端末内画像読み込み
-        button2.setOnClickListener {
+        load_from_local_image.setOnClickListener {
             startActivityForResult(ImageUtil.createGetDeviceImageIntent(), RESULT_PICK_IMAGE_FILE)
         }
     }
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         when {
             result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, data)
             else -> {
+                // 読み取りに成功した文字列が存在すれば読み取り結果画面に遷移
                 Intent(applicationContext, ResultActivity::class.java).let {
                     it.putExtra(Intent.EXTRA_TEXT, result)
                     startActivity(it)

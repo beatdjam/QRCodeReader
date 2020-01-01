@@ -16,7 +16,11 @@ object ZXingUtil {
      * QRCode読み取りカメラ起動
      */
     fun initiateScan(activity: Activity) =
-        IntentIntegrator(activity).setBeepEnabled(false).initiateScan()
+        IntentIntegrator(activity).apply {
+            captureActivity = MyCaptureActivity::class.java
+            setPrompt("QRコードを読み取ってください")
+            setBeepEnabled(false)
+        }.initiateScan()
 
     /**
      * カメラ画像からQRCode読み取りを実行
