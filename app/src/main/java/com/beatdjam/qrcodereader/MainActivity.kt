@@ -1,19 +1,14 @@
 package com.beatdjam.qrcodereader
 
 import android.app.Activity
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.webkit.URLUtil
-import android.widget.Toast
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+
 
 class MainActivity : AppCompatActivity() {
     private val RESULT_PICK_IMAGEFILE = 1000
@@ -26,27 +21,22 @@ class MainActivity : AppCompatActivity() {
         // 外部から起動されて文字列が渡ってきていたらQR生成
         val intentString = intent.dataString ?: intent.getStringExtra(Intent.EXTRA_TEXT)
         if (!intentString.isNullOrEmpty()) {
-            val bitmap = ZXingModel.makeQRCode(intentString)
+            val bitmap = ZXingUtil.makeQRCode(intentString)
             editText.setText(intentString)
             imageView2.setImageBitmap(bitmap)
         }
 
         // QRコードスキャナ起動
-        fab.setOnClickListener { ZXingModel.initiateScan(this) }
-
+        fab.setOnClickListener { ZXingUtil.initiateScan(this) }
         // ボタンを押してQRコード生成
         button.setOnClickListener {
             val text = editText.text.toString()
-            if (text.isNotEmpty()) ZXingModel.makeQRCode(editText.text.toString())
+            if (text.isNotEmpty()) ZXingUtil.makeQRCode(editText.text.toString())
         }
 
-        // TODO リファクタ
+        // 端末内画像読み込み
         button2.setOnClickListener {
-            val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).also {
-                it.addCategory(Intent.CATEGORY_OPENABLE)
-                it.type = "image/*"
-            }
-            startActivityForResult(intent, RESULT_PICK_IMAGEFILE)
+            startActivityForResult(ImageUtil.createIntentOfGetDeviceImage(), RESULT_PICK_IMAGEFILE)
         }
     }
 
@@ -54,35 +44,21 @@ class MainActivity : AppCompatActivity() {
         val result = when {
             // ローカル画像読み取りの場合
             requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK -> {
-                getBitmapFromUri(data?.data)?.let { ZXingModel.readQRCodeFromImage(it) }
+                getBitmapFromUri(data?.data)?.let { ZXingUtil.readQRCodeFromImage(it) }
             }
             // カメラからのQRコード読み取り後の処理
-            else -> ZXingModel.readQRCodeFromCamera(requestCode, resultCode, data)
+            else -> ZXingUtil.readQRCodeFromCamera(requestCode, resultCode, data)
         }
 
         when {
             result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, data)
-            else -> dialogAction(result)
-        }
-    }
-
-
-    private fun dialogAction(contents: String) {
-        val (title, text, event) = when {
-            URLUtil.isValidUrl(contents) -> {
-                Triple("読み取りURLをブラウザで開きますか？", "開く", ::openBrowser)
-            }
             else -> {
-                Triple("読み取りテキストをクリップボードにコピーしますか？", "コピー", ::copyToClipBoard)
+                Intent(applicationContext, ResultActivity::class.java).let {
+                    it.putExtra(Intent.EXTRA_TEXT, result)
+                    startActivity(it)
+                }
             }
         }
-
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(contents)
-            .setPositiveButton(text) { _, _ -> event(contents) }
-            .setNegativeButton("閉じる", null)
-            .show()
     }
 
     /**
@@ -93,15 +69,5 @@ class MainActivity : AppCompatActivity() {
             .openFileDescriptor(uri, "r")
             ?.use { BitmapFactory.decodeFileDescriptor(it.fileDescriptor) }
         else -> null
-    }
-
-    private fun openBrowser(contents: String) =
-        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(contents)))
-
-    private fun copyToClipBoard(contents: String) {
-        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-        val clip = ClipData.newPlainText("", contents)
-        clipboard.setPrimaryClip(clip)
-        Toast.makeText(this, "クリップボードにコピーしました", Toast.LENGTH_SHORT).show()
     }
 }

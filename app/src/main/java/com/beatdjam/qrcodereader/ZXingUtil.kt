@@ -9,7 +9,7 @@ import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
 
-object ZXingModel {
+object ZXingUtil {
     /**
      * QRCode読み取りカメラ起動
      */
