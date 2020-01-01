@@ -5,19 +5,13 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.util.AndroidRuntimeException
 import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import com.google.zxing.*
-import com.google.zxing.common.HybridBinarizer
-import com.google.zxing.integration.android.IntentIntegrator
-import com.journeyapps.barcodescanner.BarcodeEncoder
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
@@ -33,16 +27,17 @@ class MainActivity : AppCompatActivity() {
         val intentString = intent.dataString ?: intent.getStringExtra(Intent.EXTRA_TEXT)
         if (!intentString.isNullOrEmpty()) {
             editText.setText(intentString)
-            makeQRCode(editText.text.toString())
+            val bitmap = ZXingModel.makeQRCode(editText.text.toString())
+            imageView2.setImageBitmap(bitmap)
         }
 
         // QRコードスキャナ起動
-        fab.setOnClickListener { IntentIntegrator(this).setBeepEnabled(false).initiateScan() }
+        fab.setOnClickListener { ZXingModel.initiateScan(this) }
 
         // ボタンを押してQRコード生成
         button.setOnClickListener {
             val text = editText.text.toString()
-            if (text.isNotEmpty()) makeQRCode(editText.text.toString())
+            if (text.isNotEmpty()) ZXingModel.makeQRCode(editText.text.toString())
         }
 
         // TODO リファクタ
@@ -56,18 +51,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, intantData: Intent?) {
-        // TODO リファクタ
+        // ローカル画像読み込みの場合は優先的に処理
         if (requestCode == RESULT_PICK_IMAGEFILE && resultCode == Activity.RESULT_OK) {
             val bitmap = intantData?.data?.let { getBitmapFromUri(it) }
-            if (bitmap != null) readQRCodeFromImage(bitmap)
+            if (bitmap != null) {
+                val readFromQRCode = ZXingModel.readQRCodeFromImage(bitmap)
+                Toast.makeText(this, readFromQRCode, Toast.LENGTH_SHORT).show()
+            }
             return
         }
 
-
-        val result = IntentIntegrator
-            .parseActivityResult(requestCode, resultCode, intantData)
-            ?.contents
-
+        // カメラからのQRコード読み取り後の処理
+        val result = ZXingModel.readQRCodeFromCamera(requestCode, resultCode, intantData)
         when {
             result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, intantData)
             URLUtil.isValidUrl(result) -> dialogAction(
@@ -111,32 +106,5 @@ class MainActivity : AppCompatActivity() {
         val clip = ClipData.newPlainText("", contents)
         clipboard.setPrimaryClip(clip)
         Toast.makeText(this, "クリップボードにコピーしました", Toast.LENGTH_SHORT).show()
-    }
-
-    private fun makeQRCode(contents: String) = try {
-        val size = 500
-        val bitmap = BarcodeEncoder().encodeBitmap(
-            contents,
-            BarcodeFormat.QR_CODE,
-            size,
-            size,
-            mapOf(EncodeHintType.CHARACTER_SET to "UTF-8")
-        )
-        imageView2.setImageBitmap(bitmap)
-    } catch (e: WriterException) {
-        throw AndroidRuntimeException("Barcode Error.", e)
-    }
-
-    // TODO リファクタ
-    private fun readQRCodeFromImage(bitmap: Bitmap) {
-        val readString = with(bitmap) {
-            val pixels = IntArray(width * height)
-            getPixels(pixels, 0, width, 0, 0, width, height)
-            val source = RGBLuminanceSource(width, height, pixels)
-            val binaryBitmap = BinaryBitmap(HybridBinarizer(source))
-            MultiFormatReader().decode(binaryBitmap)?.text
-        }
-
-        Toast.makeText(this, readString, Toast.LENGTH_SHORT).show()
     }
 }
