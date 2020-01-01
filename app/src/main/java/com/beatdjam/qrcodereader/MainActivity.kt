@@ -77,12 +77,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getBitmapFromUri(uri: Uri?) = when {
-        uri != null -> contentResolver
-            .openFileDescriptor(uri, "r")
-            ?.use { BitmapFactory.decodeFileDescriptor(it.fileDescriptor) }
-        else -> null
-    }
 
     private fun dialogAction(
         contents: String,
@@ -96,6 +90,16 @@ class MainActivity : AppCompatActivity() {
             .setPositiveButton(positiveText) { _, _ -> positiveEvent(contents) }
             .setNegativeButton("閉じる", null)
             .show()
+    }
+
+    /**
+     * 画像選択Intentから渡されたURIを用いて、Bitmap取得を行う
+     */
+    private fun getBitmapFromUri(uri: Uri?) = when {
+        uri != null -> contentResolver
+            .openFileDescriptor(uri, "r")
+            ?.use { BitmapFactory.decodeFileDescriptor(it.fileDescriptor) }
+        else -> null
     }
 
     private fun openBrowser(contents: String) =

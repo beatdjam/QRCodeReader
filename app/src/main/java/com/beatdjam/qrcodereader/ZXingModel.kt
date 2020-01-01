@@ -10,15 +10,21 @@ import com.google.zxing.integration.android.IntentIntegrator
 import com.journeyapps.barcodescanner.BarcodeEncoder
 
 object ZXingModel {
-    // QRCode読み取りカメラ起動
+    /**
+     * QRCode読み取りカメラ起動
+     */
     fun initiateScan(activity: Activity) =
         IntentIntegrator(activity).setBeepEnabled(false).initiateScan()
 
-    // カメラ画像からQRCode読み取りを実行
+    /**
+     * カメラ画像からQRCode読み取りを実行
+     */
     fun readQRCodeFromCamera(requestCode: Int, resultCode: Int, intantData: Intent?) =
         IntentIntegrator.parseActivityResult(requestCode, resultCode, intantData)?.contents
 
-    // bitmapからQRCode読み取りを実行
+    /**
+     * bitmapからQRCode読み取りを実行
+     */
     fun readQRCodeFromImage(bitmap: Bitmap) = with(bitmap) {
         val pixels = IntArray(width * height)
         getPixels(pixels, 0, width, 0, 0, width, height)
@@ -27,7 +33,9 @@ object ZXingModel {
         MultiFormatReader().decode(binaryBitmap)?.text
     }
 
-    // 文字列からQRCode生成
+    /**
+     * 文字列からQRCode生成
+     */
     fun makeQRCode(contents: String) = try {
         val size = 500
         BarcodeEncoder().encodeBitmap(
