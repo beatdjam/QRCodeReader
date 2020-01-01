@@ -22,13 +22,19 @@ class ResultActivity : AppCompatActivity() {
         textView.text = extraText
         if (URLUtil.isValidUrl(extraText)) imageButton2.visibility = View.VISIBLE
         imageButton.setOnClickListener { copyToClipBoard(extraText) }
-        imageButton2.setOnClickListener { openBrowser(extraText) }
+        imageButton2.setOnClickListener { startDefaultIntent(extraText) }
     }
 
 
-    private fun openBrowser(contents: String) =
+    /**
+     * 文字列を端末規定のアプリケーションで開く
+     */
+    private fun startDefaultIntent(contents: String) =
         startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(contents)))
 
+    /**
+     * クリップボードにコピー
+     */
     private fun copyToClipBoard(contents: String) {
         val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
         val clip = ClipData.newPlainText("", contents)
