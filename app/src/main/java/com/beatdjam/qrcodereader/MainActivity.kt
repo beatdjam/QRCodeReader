@@ -3,6 +3,7 @@ package com.beatdjam.qrcodereader
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.beatdjam.qrcodereader.ZXingUtil.RESULT_PICK_IMAGE_FILE
 import kotlinx.android.synthetic.main.activity_main.*
@@ -17,18 +18,12 @@ class MainActivity : AppCompatActivity() {
 
         // 外部から起動されて文字列が渡ってきていたらQR生成
         val intentString = intent.dataString ?: intent.getStringExtra(Intent.EXTRA_TEXT)
-        if (!intentString.isNullOrEmpty()) {
-            val bitmap = ZXingUtil.makeQRCode(intentString)
-            editText.setText(intentString)
-            imageView2.setImageBitmap(bitmap)
-        }
+        if (!intentString.isNullOrEmpty()) setQRCodeBitmapByText(intentString)
 
         // ボタンを押してQRコード生成
         create_qr_code.setOnClickListener {
             val text = editText.text.toString()
-            if (text.isNotEmpty()) {
-                imageView2.setImageBitmap(ZXingUtil.makeQRCode(editText.text.toString()))
-            }
+            if (text.isNotEmpty()) setQRCodeBitmapByText(text)
         }
 
         // QRコードスキャナ起動
@@ -39,6 +34,7 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(ImageUtil.createGetDeviceImageIntent(), RESULT_PICK_IMAGE_FILE)
         }
     }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         val result = getStringFromQRCode(requestCode, resultCode, data)
@@ -52,6 +48,16 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * 文字列からQRコードを生成してImageViewに設定
+     */
+    private fun setQRCodeBitmapByText(text: String) {
+        val bitmap = ZXingUtil.makeQRCode(text)
+        editText.setText(text)
+        imageView2.setImageBitmap(bitmap)
+        imageView2.visibility = View.VISIBLE
     }
 
     /**

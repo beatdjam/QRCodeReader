@@ -42,7 +42,7 @@ object ZXingUtil {
     /**
      * 文字列からQRCode生成
      */
-    fun makeQRCode(contents: String) = try {
+    fun makeQRCode(contents: String): Bitmap = try {
         val size = 500
         BarcodeEncoder().encodeBitmap(
             contents,
