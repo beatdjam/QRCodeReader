@@ -5,7 +5,6 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import android.os.Build
 import android.os.Build.VERSION
 import android.os.Build.VERSION_CODES
@@ -99,11 +98,10 @@ object ScreenshotUtil {
         // AndroidQ以降とそれより前で設定可能なKeyが異なるため、
         // ここでは共通部分のみ生成してif文内でそれぞれに必要な値を追加しています
         val contentValues = createContentValues(fileName)
-        val uri: Uri
         when {
             VERSION_CODES.Q <= VERSION.SDK_INT -> {
+                // 画像の保存先を指定します（AndroidQより前と指定方法が異なります）
                 contentValues.apply {
-                    // 画像の保存先を指定します（AndroidQより前と指定方法が異なります）
                     put(
                         MediaStore.Images.Media.RELATIVE_PATH,
                         "${Environment.DIRECTORY_PICTURES}/$DIRECTORY_NAME"
@@ -112,7 +110,7 @@ object ScreenshotUtil {
                 }
 
                 contentResolver.run {
-                    uri = insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+                    val uri = insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                         ?: return
 
                     // AndroidQ以降では画像の書き出し前にギャラリーへの登録(正確に言うとMediaStoreへの登録)を
@@ -128,26 +126,22 @@ object ScreenshotUtil {
             else -> {
                 // AndroidQより前の処理では一部メソッドがDeprecatedになっていますが、
                 // Q以降の処理に互換性がないためSDK_INTによって処理を分岐させています
-
-                // スクリーンショット画像書き出し用のディレクトリ・ファイルを準備
-                val directory = File(
-                    // ファイルの書き出し先はいくつか候補がありますが、
-                    // アプリを削除してもファイルが消えない、外部アプリからアクセス可能という理由から、
-                    // getExternalStoragePublicDirectoryを選択しています
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
-                    DIRECTORY_NAME
-                )
-                if (!directory.exists()) directory.mkdirs()
-                val file = File(directory, "$fileName$FILE_EXTENSION")
-
-                // Bitmapをファイルに書き出します
-                FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
-
-                // 書き出した画像をギャラリーに反映させています
                 contentResolver.run {
+                    // スクリーンショット画像書き出し用のディレクトリ・ファイルを準備
+                    val directory = File(
+                        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
+                        DIRECTORY_NAME
+                    )
+                    if (!directory.exists()) directory.mkdirs()
+
+                    val file = File(directory, "$fileName$FILE_EXTENSION")
+                    // Bitmapをファイルに書き出します
+                    FileOutputStream(file).use {
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+                    }
+
                     contentValues.put(MediaStore.Images.Media.DATA, file.absolutePath)
-                    uri = insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-                        ?: return
+                    insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                 }
             }
         }
