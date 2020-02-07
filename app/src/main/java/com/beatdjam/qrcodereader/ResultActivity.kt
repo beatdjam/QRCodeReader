@@ -18,8 +18,10 @@ class ResultActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
 
+        // QRコードから読み取った文字列を取り出す
         val extraText = intent.getStringExtra(Intent.EXTRA_TEXT)
         textView.text = extraText
+        // Urlとして認識可能な文字列であれば外部アプリで開くボタンを表示
         if (URLUtil.isValidUrl(extraText)) imageButton2.visibility = View.VISIBLE
         imageButton.setOnClickListener { copyToClipBoard(extraText) }
         imageButton2.setOnClickListener { startDefaultIntent(extraText) }

@@ -4,10 +4,16 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.beatdjam.qrcodereader.ZXingUtil.RESULT_PICK_IMAGE_FILE
+import androidx.core.view.drawToBitmap
+import com.beatdjam.qrcodereader.util.ImageUtil
+import com.beatdjam.qrcodereader.util.ZXingUtil
+import com.beatdjam.qrcodereader.util.ZXingUtil.RESULT_PICK_IMAGE_FILE
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 class MainActivity : AppCompatActivity() {
@@ -32,6 +38,12 @@ class MainActivity : AppCompatActivity() {
         // 端末内画像読み込み
         load_from_local_image.setOnClickListener {
             startActivityForResult(ImageUtil.createGetDeviceImageIntent(), RESULT_PICK_IMAGE_FILE)
+        }
+        button.setOnClickListener {
+            // 現在時刻をファイル名にする
+            val fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+            ImageUtil.saveBitmapImage(this.contentResolver, imageView2.drawToBitmap(), fileName)
+            Toast.makeText(this, "QRコードを保存しました", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -72,5 +84,4 @@ class MainActivity : AppCompatActivity() {
         // カメラからのQRコード読み取り後の処理
         else -> ZXingUtil.readQRCodeFromCamera(requestCode, resultCode, data)
     }
-
 }
