@@ -1,4 +1,4 @@
-package com.beatdjam.qrcodereader
+package com.beatdjam.qrcodereader.activity
 
 import com.journeyapps.barcodescanner.CaptureActivity
 

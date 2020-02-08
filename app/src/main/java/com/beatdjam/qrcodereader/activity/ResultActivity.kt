@@ -1,4 +1,4 @@
-package com.beatdjam.qrcodereader
+package com.beatdjam.qrcodereader.activity
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -10,6 +10,7 @@ import android.view.View
 import android.webkit.URLUtil
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.beatdjam.qrcodereader.R
 import kotlinx.android.synthetic.main.activity_result.*
 
 class ResultActivity : AppCompatActivity() {

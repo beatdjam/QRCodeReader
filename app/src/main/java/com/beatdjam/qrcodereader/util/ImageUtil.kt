@@ -12,6 +12,8 @@ import android.os.Environment
 import android.provider.MediaStore
 import java.io.File
 import java.io.FileOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object ImageUtil {
     private const val DIRECTORY_NAME = "com.beatdjam.qrcodereader"
@@ -38,7 +40,11 @@ object ImageUtil {
     /**
      * 与えられたBitmapをAndroidのバージョンに合わせて保存する
      */
-    fun saveBitmapImage(contentResolver: ContentResolver, bitmap: Bitmap, fileName: String) {
+    fun saveBitmapImage(
+        contentResolver: ContentResolver,
+        bitmap: Bitmap,
+        fileName: String = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    ) {
         // ギャラリーへの反映時に必要な情報を格納している値です
         // AndroidQ以降とそれより前で設定可能なKeyが異なるため、
         // ここでは共通部分のみ生成してif文内でそれぞれに必要な値を追加しています
@@ -71,7 +77,6 @@ object ImageUtil {
             // それ以前用の処理
             // Qより前のOS用の処理のため一部メソッドがDeprecatedになっているが利用している
             else -> contentResolver.run {
-                // FIXME 権限周り調整
                 // 書き出し用のディレクトリを作成
                 val directory = File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),

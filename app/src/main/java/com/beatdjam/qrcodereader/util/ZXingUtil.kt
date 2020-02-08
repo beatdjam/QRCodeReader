@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.util.AndroidRuntimeException
-import com.beatdjam.qrcodereader.MyCaptureActivity
+import com.beatdjam.qrcodereader.activity.MyCaptureActivity
 import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.integration.android.IntentIntegrator
