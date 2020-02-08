@@ -10,8 +10,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.core.net.toUri
 import java.io.File
+import java.io.FileOutputStream
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 object ImageUtil {
     private const val DIRECTORY_NAME = "com.beatdjam.qrcodereader"
@@ -38,7 +40,11 @@ object ImageUtil {
     /**
      * 与えられたBitmapをAndroidのバージョンに合わせて保存する
      */
-    fun saveBitmapImage(contentResolver: ContentResolver, bitmap: Bitmap, fileName: String) {
+    fun saveBitmapImage(
+        contentResolver: ContentResolver,
+        bitmap: Bitmap,
+        fileName: String = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+    ) {
         // ギャラリーへの反映時に必要な情報を格納している値です
         // AndroidQ以降とそれより前で設定可能なKeyが異なるため、
         // ここでは共通部分のみ生成してif文内でそれぞれに必要な値を追加しています
@@ -81,9 +87,7 @@ object ImageUtil {
                 // 書き出し用のファイルを作成
                 val file = File(directory, "$fileName${FILE_EXTENSION}")
                 // Bitmapをファイルに書き出し
-                openOutputStream(file.toUri()).use {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
-                }
+                FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
 
                 contentValues.put(MediaStore.Images.Media.DATA, file.absolutePath)
                 insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)

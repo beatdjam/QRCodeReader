@@ -4,7 +4,7 @@ import android.app.Activity
 import android.content.Intent
 import android.graphics.Bitmap
 import android.util.AndroidRuntimeException
-import com.beatdjam.qrcodereader.MyCaptureActivity
+import com.beatdjam.qrcodereader.activity.MyCaptureActivity
 import com.google.zxing.*
 import com.google.zxing.common.HybridBinarizer
 import com.google.zxing.integration.android.IntentIntegrator
@@ -12,6 +12,7 @@ import com.journeyapps.barcodescanner.BarcodeEncoder
 
 object ZXingUtil {
     const val RESULT_PICK_IMAGE_FILE = 1000
+    const val RESULT_CAMERA = 1001
 
     /**
      * QRCode読み取りカメラ起動
@@ -21,6 +22,7 @@ object ZXingUtil {
             captureActivity = MyCaptureActivity::class.java
             setPrompt("QRコードを読み取ってください")
             setBeepEnabled(false)
+            setRequestCode(RESULT_CAMERA)
         }.initiateScan()
 
     /**
