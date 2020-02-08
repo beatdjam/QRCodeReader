@@ -12,6 +12,7 @@ import com.journeyapps.barcodescanner.BarcodeEncoder
 
 object ZXingUtil {
     const val RESULT_PICK_IMAGE_FILE = 1000
+    const val RESULT_CAMERA = 1001
 
     /**
      * QRCode読み取りカメラ起動
@@ -21,6 +22,7 @@ object ZXingUtil {
             captureActivity = MyCaptureActivity::class.java
             setPrompt("QRコードを読み取ってください")
             setBeepEnabled(false)
+            setRequestCode(RESULT_CAMERA)
         }.initiateScan()
 
     /**

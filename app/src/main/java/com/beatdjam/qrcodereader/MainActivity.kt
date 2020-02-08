@@ -1,14 +1,18 @@
 package com.beatdjam.qrcodereader
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.view.drawToBitmap
 import com.beatdjam.qrcodereader.util.ImageUtil
 import com.beatdjam.qrcodereader.util.ZXingUtil
+import com.beatdjam.qrcodereader.util.ZXingUtil.RESULT_CAMERA
 import com.beatdjam.qrcodereader.util.ZXingUtil.RESULT_PICK_IMAGE_FILE
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
@@ -17,6 +21,8 @@ import java.time.format.DateTimeFormatter
 
 
 class MainActivity : AppCompatActivity() {
+    private val MY_PERMISSIONS_REQUEST_READ_CONTACTS = 2000
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -40,25 +46,67 @@ class MainActivity : AppCompatActivity() {
             startActivityForResult(ImageUtil.createGetDeviceImageIntent(), RESULT_PICK_IMAGE_FILE)
         }
         button.setOnClickListener {
-            // 現在時刻をファイル名にする
-            val fileName = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
-            ImageUtil.saveBitmapImage(this.contentResolver, imageView2.drawToBitmap(), fileName)
-            Toast.makeText(this, "QRコードを保存しました", Toast.LENGTH_SHORT).show()
+            // QRコード保存のために保存用のPermissionを取得する
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_DENIED) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+                    MY_PERMISSIONS_REQUEST_READ_CONTACTS
+                )
+            }
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                savePicture()
+                Toast.makeText(this, "QRコードを保存しました", Toast.LENGTH_SHORT).show()
+            }
         }
+    }
+
+    private fun savePicture() {
+        // 現在時刻をファイル名にする
+        val fileName = LocalDateTime.now()
+            .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"))
+        ImageUtil.saveBitmapImage(
+            this.contentResolver, imageView2.drawToBitmap(), fileName
+        )
     }
 
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        val result = getStringFromQRCode(requestCode, resultCode, data)
         when {
-            result.isNullOrEmpty() -> super.onActivityResult(requestCode, resultCode, data)
-            else -> {
-                // 読み取りに成功した文字列が存在すれば読み取り結果画面に遷移
-                Intent(applicationContext, ResultActivity::class.java).let {
-                    it.putExtra(Intent.EXTRA_TEXT, result)
-                    startActivity(it)
-                }
+            requestCode == RESULT_PICK_IMAGE_FILE && resultCode == Activity.RESULT_OK -> {
+                val uri = ImageUtil.getBitmapFromUri(this, data?.data)
+                    ?.let { ZXingUtil.readQRCodeFromImage(it) }
+                if (uri != null) return startResultActivity(uri)
             }
+
+            // カメラからのQRコード読み取り後の処理
+            requestCode == RESULT_CAMERA && resultCode == Activity.RESULT_OK -> {
+                val uri = ZXingUtil.readQRCodeFromCamera(requestCode, resultCode, data)
+                if (uri != null) return startResultActivity(uri)
+            }
+            else -> super.onActivityResult(requestCode, resultCode, data)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            // 先ほどの独自定義したrequestCodeの結果確認
+            MY_PERMISSIONS_REQUEST_READ_CONTACTS -> {
+                if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    savePicture()
+                } else Toast.makeText(this, "ストレージへのアクセスが許可されていません", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    private fun startResultActivity(result: String) {
+        Intent(applicationContext, ResultActivity::class.java).let {
+            it.putExtra(Intent.EXTRA_TEXT, result)
+            startActivity(it)
         }
     }
 
@@ -70,18 +118,5 @@ class MainActivity : AppCompatActivity() {
         editText.setText(text)
         imageView2.setImageBitmap(bitmap)
         imageView2.visibility = View.VISIBLE
-    }
-
-    /**
-     * QRコードから文字列を取得
-     */
-    private fun getStringFromQRCode(requestCode: Int, resultCode: Int, data: Intent?) = when {
-        // ローカル画像読み取りの場合
-        requestCode == RESULT_PICK_IMAGE_FILE && resultCode == Activity.RESULT_OK -> {
-            ImageUtil.getBitmapFromUri(this, data?.data)
-                ?.let { ZXingUtil.readQRCodeFromImage(it) }
-        }
-        // カメラからのQRコード読み取り後の処理
-        else -> ZXingUtil.readQRCodeFromCamera(requestCode, resultCode, data)
     }
 }

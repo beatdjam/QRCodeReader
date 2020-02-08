@@ -10,8 +10,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.core.net.toUri
 import java.io.File
+import java.io.FileOutputStream
 
 object ImageUtil {
     private const val DIRECTORY_NAME = "com.beatdjam.qrcodereader"
@@ -71,6 +71,7 @@ object ImageUtil {
             // それ以前用の処理
             // Qより前のOS用の処理のため一部メソッドがDeprecatedになっているが利用している
             else -> contentResolver.run {
+                // FIXME 権限周り調整
                 // 書き出し用のディレクトリを作成
                 val directory = File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES),
@@ -81,9 +82,7 @@ object ImageUtil {
                 // 書き出し用のファイルを作成
                 val file = File(directory, "$fileName${FILE_EXTENSION}")
                 // Bitmapをファイルに書き出し
-                openOutputStream(file.toUri()).use {
-                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
-                }
+                FileOutputStream(file).use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
 
                 contentValues.put(MediaStore.Images.Media.DATA, file.absolutePath)
                 insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
