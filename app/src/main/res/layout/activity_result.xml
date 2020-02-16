@@ -37,15 +37,15 @@
 
     <ScrollView
         android:id="@+id/scrollView"
-        android:layout_width="360dp"
+        android:layout_width="0dp"
         android:layout_height="360dp"
         android:layout_marginTop="60dp"
+        android:background="@drawable/view_frame"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.509"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:background="@drawable/view_frame"
         app:layout_constraintVertical_bias="0.0">
 
         <TextView

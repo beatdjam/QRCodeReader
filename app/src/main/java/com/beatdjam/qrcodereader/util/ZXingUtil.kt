@@ -28,8 +28,8 @@ object ZXingUtil {
     /**
      * カメラ画像からQRCode読み取りを実行
      */
-    fun readQRCodeFromCamera(requestCode: Int, resultCode: Int, intantData: Intent?) =
-        IntentIntegrator.parseActivityResult(requestCode, resultCode, intantData)?.contents
+    fun readQRCodeFromCamera(resultCode: Int, intantData: Intent?) =
+        IntentIntegrator.parseActivityResult(resultCode, intantData)?.contents
 
     /**
      * bitmapからQRCode読み取りを実行
