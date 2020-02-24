@@ -3,12 +3,16 @@ package com.beatdjam.qrcodereader.activity
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import com.beatdjam.qrcodereader.R
 import com.beatdjam.qrcodereader.util.ImageUtil
 import com.beatdjam.qrcodereader.util.ZXingUtil
 import com.beatdjam.qrcodereader.util.ZXingUtil.RESULT_CAMERA
 import com.beatdjam.qrcodereader.util.ZXingUtil.RESULT_PICK_IMAGE_FILE
+import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
+import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.android.synthetic.main.content_main.*
 
 
@@ -16,6 +20,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        setSupportActionBar(toolbar)
 
         // QRコード作成画面起動
         edit.setOnClickListener {
@@ -29,6 +34,26 @@ class MainActivity : AppCompatActivity() {
         gallery.setOnClickListener {
             startActivityForResult(ImageUtil.createGetDeviceImageIntent(), RESULT_PICK_IMAGE_FILE)
         }
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean = when (item.itemId) {
+        R.id.action_oss_licence -> {
+            val intent = Intent(this, OssLicensesMenuActivity::class.java)
+            intent.putExtra("title", resources.getString(R.string.oss_license_title))
+            startActivity(intent)
+            true
+        }
+        R.id.action_privacy_policy -> {
+            val intent = Intent(applicationContext, PrivacyPolicyActivity::class.java)
+            startActivity(intent)
+            true
+        }
+        else -> super.onOptionsItemSelected(item)
     }
 
     // 画像読み込み後の処理を分岐
