@@ -24,8 +24,8 @@ class ResultActivity : AppCompatActivity() {
         textView.text = extraText
         // Urlとして認識可能な文字列であれば外部アプリで開くボタンを表示
         if (URLUtil.isValidUrl(extraText)) imageButton2.visibility = View.VISIBLE
-        imageButton.setOnClickListener { copyToClipBoard(extraText) }
-        imageButton2.setOnClickListener { startDefaultIntent(extraText) }
+        imageButton.setOnClickListener { copyToClipBoard(extraText ?: "") }
+        imageButton2.setOnClickListener { startDefaultIntent(extraText ?: "") }
     }
 
 
